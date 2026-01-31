@@ -3,10 +3,12 @@ import { MercadoPagoWebhookDto } from '../../../src/application/dtos';
 import { Payment } from '../../../src/domain/entities/payment.entity';
 import { PaymentMethod, PaymentStatus } from '../../../src/domain/enums';
 import { IPaymentRepository } from '../../../src/domain/repositories/payment.repository.interface';
+import { TemporalClient } from '../../../src/infrastructure/temporal/temporal.client';
 
 describe('ProcessWebhookUseCase', () => {
   let useCase: ProcessWebhookUseCase;
   let mockPaymentRepository: jest.Mocked<IPaymentRepository>;
+  let mockTemporalClient: jest.Mocked<TemporalClient>;
 
   beforeEach(() => {
     mockPaymentRepository = {
@@ -17,11 +19,18 @@ describe('ProcessWebhookUseCase', () => {
       findByExternalId: jest.fn(),
     };
 
-    useCase = new ProcessWebhookUseCase(mockPaymentRepository);
+    mockTemporalClient = {
+      getClient: jest.fn(),
+      getTaskQueue: jest.fn().mockReturnValue('payment-queue'),
+      getPaymentTimeoutMinutes: jest.fn().mockReturnValue(30),
+      onModuleDestroy: jest.fn(),
+    } as unknown as jest.Mocked<TemporalClient>;
+
+    useCase = new ProcessWebhookUseCase(mockPaymentRepository, mockTemporalClient);
   });
 
   describe('execute', () => {
-    it('should update payment status to PAID when action is payment.approved', async () => {
+    it('should signal workflow when CREDIT_CARD payment receives webhook', async () => {
       const externalId = 'external-123';
       const webhookData: MercadoPagoWebhookDto = {
         type: 'payment',
@@ -39,20 +48,38 @@ describe('ProcessWebhookUseCase', () => {
         externalId,
       });
 
+      const mockWorkflowHandle = {
+        signal: jest.fn().mockResolvedValue(undefined),
+      };
+
+      const mockWorkflowIterator = {
+        [Symbol.asyncIterator]: async function* () {
+          yield { workflowId: 'payment-123' };
+        },
+      };
+
+      const mockClient = {
+        workflow: {
+          list: jest.fn().mockReturnValue(mockWorkflowIterator),
+          getHandle: jest.fn().mockReturnValue(mockWorkflowHandle),
+        },
+      };
+
       mockPaymentRepository.findByExternalId.mockResolvedValue(payment);
-      mockPaymentRepository.update.mockResolvedValue(payment);
+      mockTemporalClient.getClient.mockResolvedValue(mockClient as any);
 
       await useCase.execute(webhookData);
 
       expect(mockPaymentRepository.findByExternalId).toHaveBeenCalledWith(externalId);
-      expect(mockPaymentRepository.update).toHaveBeenCalledTimes(1);
+      expect(mockTemporalClient.getClient).toHaveBeenCalled();
+      expect(mockWorkflowHandle.signal).toHaveBeenCalled();
     });
 
-    it('should update payment status to FAIL when action is payment.rejected', async () => {
+    it('should update PIX payment directly without using Temporal', async () => {
       const externalId = 'external-123';
       const webhookData: MercadoPagoWebhookDto = {
         type: 'payment',
-        action: 'payment.rejected',
+        action: 'payment.approved',
         data: { id: externalId },
       };
 
@@ -61,7 +88,7 @@ describe('ProcessWebhookUseCase', () => {
         cpf: '12345678901',
         description: 'Test payment',
         amount: 100.0,
-        paymentMethod: PaymentMethod.CREDIT_CARD,
+        paymentMethod: PaymentMethod.PIX,
         status: PaymentStatus.PENDING,
         externalId,
       });
@@ -73,6 +100,7 @@ describe('ProcessWebhookUseCase', () => {
 
       expect(mockPaymentRepository.findByExternalId).toHaveBeenCalledWith(externalId);
       expect(mockPaymentRepository.update).toHaveBeenCalledTimes(1);
+      expect(mockTemporalClient.getClient).not.toHaveBeenCalled();
     });
 
     it('should ignore non-payment webhook types', async () => {
@@ -99,6 +127,7 @@ describe('ProcessWebhookUseCase', () => {
       await useCase.execute(webhookData);
 
       expect(mockPaymentRepository.update).not.toHaveBeenCalled();
+      expect(mockTemporalClient.getClient).not.toHaveBeenCalled();
     });
   });
 });

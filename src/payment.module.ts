@@ -12,11 +12,15 @@ import { PAYMENT_GATEWAY } from './domain/services/payment-gateway.interface';
 import { PaymentOrmEntity } from './infrastructure/database/entities/payment.orm-entity';
 import { PaymentTypeOrmRepository } from './infrastructure/database/repositories/payment.typeorm-repository';
 import { MercadoPagoService } from './infrastructure/services/mercado-pago.service';
+import { TemporalModule } from './infrastructure/temporal/temporal.module';
 import { PaymentController } from './presentation/controllers/payment.controller';
 import { WebhookController } from './presentation/controllers/webhook.controller';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([PaymentOrmEntity])],
+  imports: [
+    TypeOrmModule.forFeature([PaymentOrmEntity]),
+    TemporalModule,
+  ],
   controllers: [PaymentController, WebhookController],
   providers: [
     // Use Cases

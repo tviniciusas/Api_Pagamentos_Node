@@ -20,8 +20,43 @@ services:
       - MERCADO_PAGO_WEBHOOK_URL=${MERCADO_PAGO_WEBHOOK_URL}
       - MERCADO_PAGO_SANDBOX=true
       - APP_URL=http://localhost:3000
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_NAMESPACE=default
+      - TEMPORAL_TASK_QUEUE=payment-queue
+      - TEMPORAL_PAYMENT_TIMEOUT_MINUTES=30
     depends_on:
       postgres:
+        condition: service_healthy
+      temporal:
+        condition: service_healthy
+    networks:
+      - payment-network
+
+  temporal-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: payment-temporal-worker
+    command: npm run start:worker:prod
+    environment:
+      - NODE_ENV=production
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=payment_db
+      - MERCADO_PAGO_ACCESS_TOKEN=${MERCADO_PAGO_ACCESS_TOKEN}
+      - MERCADO_PAGO_WEBHOOK_URL=${MERCADO_PAGO_WEBHOOK_URL}
+      - MERCADO_PAGO_SANDBOX=true
+      - APP_URL=http://localhost:3000
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_NAMESPACE=default
+      - TEMPORAL_TASK_QUEUE=payment-queue
+      - TEMPORAL_PAYMENT_TIMEOUT_MINUTES=30
+    depends_on:
+      postgres:
+        condition: service_healthy
+      temporal:
         condition: service_healthy
     networks:
       - payment-network
@@ -42,6 +77,46 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - payment-network
+
+  temporal:
+    image: temporalio/auto-setup:1.24.2
+    container_name: payment-temporal
+    ports:
+      - '7233:7233'
+    environment:
+      - DB=postgres12
+      - DB_PORT=5432
+      - POSTGRES_USER=postgres
+      - POSTGRES_PWD=postgres
+      - POSTGRES_SEEDS=postgres
+      - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development-sql.yaml
+    volumes:
+      - ./temporal-config:/etc/temporal/config/dynamicconfig
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'temporal', 'workflow', 'list', '--namespace', 'default']
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    networks:
+      - payment-network
+
+  temporal-ui:
+    image: temporalio/ui:2.26.2
+    container_name: payment-temporal-ui
+    ports:
+      - '8080:8080'
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_CORS_ORIGINS=http://localhost:3000
+    depends_on:
+      temporal:
+        condition: service_healthy
     networks:
       - payment-network
 

@@ -7,6 +7,7 @@ API REST para gerenciamento de pagamentos com integração PIX e Cartão de Cré
 - **NestJS** - Framework Node.js
 - **TypeORM** - ORM para banco de dados
 - **PostgreSQL** - Banco de dados relacional
+- **Temporal.io** - Orquestração de workflows duráveis
 - **Jest** - Framework de testes
 - **Docker** - Containerização
 
@@ -26,7 +27,8 @@ src/
 │   └── use-cases/    # Casos de uso
 ├── infrastructure/   # Camada de infraestrutura (implementações)
 │   ├── database/     # Configuração e repositórios TypeORM
-│   └── services/     # Serviços externos (Mercado Pago)
+│   ├── services/     # Serviços externos (Mercado Pago)
+│   └── temporal/     # Workflows e activities do Temporal.io
 └── presentation/     # Camada de apresentação (controllers)
     ├── controllers/  # Controllers REST
     └── filters/      # Filtros de exceção
@@ -74,6 +76,56 @@ src/
 - Integra com API de Preferências do Mercado Pago
 - Retorna `initPoint` para redirecionamento ao checkout
 - Recebe callback via webhook para atualizar status
+- **Utiliza Temporal.io para orquestração durável do fluxo**
+
+## Temporal.io - Orquestração de Pagamentos
+
+O Temporal.io é utilizado para garantir durabilidade e resiliência no processamento de pagamentos com Cartão de Crédito.
+
+### Arquitetura do Workflow
+
+```
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│   API NestJS    │────▶│  Temporal.io    │────▶│  Mercado Pago   │
+│   (Controller)  │     │   (Workflow)    │     │     (API)       │
+└─────────────────┘     └─────────────────┘     └─────────────────┘
+         │                      │                       │
+         │                      ▼                       │
+         │              ┌─────────────────┐             │
+         └─────────────▶│   PostgreSQL    │◀────────────┘
+                        └─────────────────┘
+```
+
+### Fluxo do Workflow
+
+1. **Usuário cria pagamento CREDIT_CARD** → API inicia workflow
+2. **Workflow salva pagamento** com status `PENDING`
+3. **Workflow chama Mercado Pago** → Cria preferência de checkout
+4. **Workflow aguarda sinal** (até 30 minutos configurável)
+5. **Webhook recebido** → Sinaliza workflow com resultado
+6. **Workflow atualiza pagamento** → `PAID` ou `FAIL`
+7. **Timeout** → Workflow marca como `FAIL`
+
+### Benefícios
+
+- **Durabilidade**: Se o servidor cair, o workflow continua de onde parou
+- **Retry automático**: Activities com retry configurável
+- **Visibilidade**: Interface web do Temporal (porta 8080)
+- **Timeout**: Tratamento de pagamentos que nunca recebem callback
+
+### Executando o Worker
+
+```bash
+# Desenvolvimento
+npm run start:worker
+
+# Produção
+npm run start:worker:prod
+```
+
+### Interface do Temporal
+
+Acesse a interface web do Temporal em: http://localhost:8080
 
 ## Instalação
 
@@ -115,8 +167,21 @@ npm run start:dev
 ### Com Docker
 
 ```bash
+# Iniciar todos os serviços (API, Worker, PostgreSQL, Temporal)
 docker-compose up -d
+
+# Iniciar apenas o banco e Temporal (para desenvolvimento local)
+docker-compose up -d postgres temporal temporal-ui
+
+# Verificar logs do worker
+docker-compose logs -f temporal-worker
 ```
+
+**Serviços disponíveis:**
+- API: http://localhost:3000
+- Temporal UI: http://localhost:8080
+- PostgreSQL: localhost:5432
+- Temporal gRPC: localhost:7233
 
 ## Testes
 
@@ -145,6 +210,10 @@ npm run test:watch
 | `MERCADO_PAGO_ACCESS_TOKEN` | Token de acesso do Mercado Pago | - |
 | `MERCADO_PAGO_WEBHOOK_URL` | URL do webhook | - |
 | `MERCADO_PAGO_SANDBOX` | Modo sandbox | `true` |
+| `TEMPORAL_ADDRESS` | Endereço do servidor Temporal | `localhost:7233` |
+| `TEMPORAL_NAMESPACE` | Namespace do Temporal | `default` |
+| `TEMPORAL_TASK_QUEUE` | Fila de tarefas do Temporal | `payment-queue` |
+| `TEMPORAL_PAYMENT_TIMEOUT_MINUTES` | Timeout para aguardar pagamento | `30` |
 
 ## Exemplos de Requisições
 
