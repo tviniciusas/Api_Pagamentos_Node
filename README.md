@@ -117,10 +117,10 @@ O Temporal.io é utilizado para garantir durabilidade e resiliência no processa
 
 ```bash
 # Desenvolvimento
-npm run start:worker
+pnpm start:worker
 
 # Produção
-npm run start:worker:prod
+pnpm start:worker:prod
 ```
 
 ### Interface do Temporal
@@ -132,10 +132,11 @@ Acesse a interface web do Temporal em: http://localhost:8080
 ### Pré-requisitos
 
 - Node.js 20+
-- PostgreSQL 15+
-- Docker (opcional)
+- pnpm 8+ (`npm install -g pnpm`)
+- Docker e Docker Compose
+- PostgreSQL 15+ (ou usar via Docker)
 
-### Configuração
+### Configuração Rápida (Desenvolvimento Local)
 
 1. Clone o repositório:
 ```bash
@@ -145,7 +146,7 @@ cd payment-api
 
 2. Instale as dependências:
 ```bash
-npm install
+pnpm install
 ```
 
 3. Configure as variáveis de ambiente:
@@ -154,46 +155,93 @@ cp .env.example .env
 # Edite o arquivo .env com suas configurações
 ```
 
-4. Inicie o banco de dados (com Docker):
+4. Inicie a infraestrutura (PostgreSQL + Temporal):
 ```bash
-docker-compose up -d postgres
-```
-
-5. Execute a aplicação:
-```bash
-npm run start:dev
-```
-
-### Com Docker
-
-```bash
-# Iniciar todos os serviços (API, Worker, PostgreSQL, Temporal)
-docker-compose up -d
-
-# Iniciar apenas o banco e Temporal (para desenvolvimento local)
 docker-compose up -d postgres temporal temporal-ui
+```
+
+5. Aguarde os serviços estarem prontos:
+```bash
+# Verificar se o Temporal está saudável
+docker-compose logs -f temporal
+# Aguarde a mensagem "Temporal server is ready"
+```
+
+6. Em um terminal, inicie o Worker do Temporal:
+```bash
+pnpm start:worker
+```
+
+7. Em outro terminal, inicie a API:
+```bash
+pnpm start:dev
+```
+
+### Com Docker (Todos os Serviços)
+
+```bash
+# Build e iniciar todos os serviços (API, Worker, PostgreSQL, Temporal)
+docker-compose up -d --build
+
+# Verificar status dos containers
+docker-compose ps
+
+# Verificar logs de todos os serviços
+docker-compose logs -f
 
 # Verificar logs do worker
 docker-compose logs -f temporal-worker
+
+# Parar todos os serviços
+docker-compose down
+
+# Parar e remover volumes (reset completo)
+docker-compose down -v
 ```
 
 **Serviços disponíveis:**
-- API: http://localhost:3000
-- Temporal UI: http://localhost:8080
-- PostgreSQL: localhost:5432
-- Temporal gRPC: localhost:7233
+| Serviço | URL | Descrição |
+|---------|-----|-----------|
+| API | http://localhost:3000 | API REST da aplicação |
+| Temporal UI | http://localhost:8080 | Interface web do Temporal |
+| PostgreSQL | localhost:5432 | Banco de dados |
+| Temporal gRPC | localhost:7233 | Servidor Temporal |
+
+### Comandos Úteis
+
+```bash
+# Desenvolvimento
+pnpm start:dev          # Iniciar API em modo watch
+pnpm start:worker       # Iniciar Worker do Temporal
+
+# Build e Produção
+pnpm build              # Compilar o projeto
+pnpm start:prod         # Iniciar API em produção
+pnpm start:worker:prod  # Iniciar Worker em produção
+
+# Banco de Dados
+pnpm migration:run      # Executar migrations
+pnpm migration:generate # Gerar nova migration
+
+# Qualidade de Código
+pnpm lint               # Executar linter
+pnpm format             # Formatar código
+```
 
 ## Testes
 
 ```bash
 # Testes unitários
-npm test
+pnpm test
 
 # Testes com cobertura
-npm run test:cov
+pnpm test:cov
 
 # Testes em modo watch
-npm run test:watch
+pnpm test:watch
+
+# Testes e2e
+pnpm test:e2e
 ```
 
 ## Variáveis de Ambiente
