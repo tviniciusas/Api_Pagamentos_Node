@@ -61,7 +61,6 @@ src/
 | GET | `/api/payment/:id` | Buscar pagamento por ID |
 | GET | `/api/payment` | Listar pagamentos (com filtros) |
 | GET | `/health` | Health check |
-| GET | `/health` | Health check |
 
 ### Webhook
 
