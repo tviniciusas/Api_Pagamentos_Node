@@ -2,6 +2,17 @@
 
 API REST para gerenciamento de pagamentos com integração PIX e Cartão de Crédito via Mercado Pago.
 
+## Deploy
+
+| Ambiente | URL |
+|----------|-----|
+| Produção (Swagger) | https://pagamentos.168.228.189.196.nip.io/docs |
+| API | https://pagamentos.168.228.189.196.nip.io/api/payment |
+| Health check | https://pagamentos.168.228.189.196.nip.io/health |
+| Temporal UI | https://pagamentos.168.228.189.196.nip.io/temporal/ |
+
+Todo push em `main` faz deploy automático. Detalhes em [docs/DEPLOY.md](docs/DEPLOY.md).
+
 ## Tecnologias
 
 - **NestJS** - Framework Node.js
@@ -34,6 +45,11 @@ src/
     └── filters/      # Filtros de exceção
 ```
 
+## Documentação (Swagger)
+
+- Interface interativa: `/docs` (produção: https://pagamentos.168.228.189.196.nip.io/docs)
+- Especificação OpenAPI em JSON: `/docs/json`
+
 ## Endpoints da API
 
 ### Pagamentos
@@ -44,6 +60,7 @@ src/
 | PUT | `/api/payment/:id` | Atualizar pagamento |
 | GET | `/api/payment/:id` | Buscar pagamento por ID |
 | GET | `/api/payment` | Listar pagamentos (com filtros) |
+| GET | `/health` | Health check |
 | GET | `/health` | Health check |
 
 ### Webhook
