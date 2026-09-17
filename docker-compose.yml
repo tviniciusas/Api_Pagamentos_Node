@@ -98,7 +98,7 @@ services:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ['CMD', 'temporal', 'workflow', 'list', '--namespace', 'default']
+      test: ['CMD', 'temporal', 'workflow', 'list', '--namespace', 'default', '--address', 'temporal:7233']
       interval: 10s
       timeout: 10s
       retries: 10
