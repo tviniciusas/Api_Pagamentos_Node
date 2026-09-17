@@ -17,8 +17,7 @@ RUN npm run build
 FROM node:20-bookworm-slim AS prod-deps
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN --mount=type=cache,target=/root/.npm npm ci --omit=dev --no-audit --no-fund \
-  && npm cache clean --force
+RUN --mount=type=cache,target=/root/.npm npm ci --omit=dev --no-audit --no-fund
 
 # ---------- runtime ----------
 FROM node:20-bookworm-slim AS production
