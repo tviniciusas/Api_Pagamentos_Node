@@ -44,6 +44,7 @@ src/
 | PUT | `/api/payment/:id` | Atualizar pagamento |
 | GET | `/api/payment/:id` | Buscar pagamento por ID |
 | GET | `/api/payment` | Listar pagamentos (com filtros) |
+| GET | `/health` | Health check |
 
 ### Webhook
 
