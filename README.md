@@ -49,6 +49,7 @@ src/
 
 - Interface interativa: `/docs` (produção: https://pagamentos.168.228.189.196.nip.io/docs)
 - Especificação OpenAPI em JSON: `/docs/json`
+- Coleção Insomnia com exemplos e ambientes Local/Produção: [docs/insomnia-payment-api.json](docs/insomnia-payment-api.json) (Import → File). Também dá para importar direto pela URL `/docs/json`.
 
 ## Endpoints da API
 
