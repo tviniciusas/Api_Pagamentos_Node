@@ -1,0 +1,156 @@
+# Production stack. Runs on the server from /opt/payment-api with a .env file next to it.
+# Images are pulled from GHCR; nothing is built on the server.
+# The host nginx (deploy/nginx-payment-api.conf) proxies 80/443 to api (127.0.0.1:3000) and temporal-ui (127.0.0.1:8088).
+#
+#   docker compose -f docker-compose.prod.yml --env-file .env up -d
+
+x-app-env: &app-env
+  NODE_ENV: production
+  PORT: 3000
+  DB_HOST: postgres
+  DB_PORT: 5432
+  DB_USERNAME: ${DB_USERNAME:-postgres}
+  DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+  DB_NAME: ${DB_NAME:-payment_db}
+  MERCADO_PAGO_ACCESS_TOKEN: ${MERCADO_PAGO_ACCESS_TOKEN:?MERCADO_PAGO_ACCESS_TOKEN is required}
+  MERCADO_PAGO_WEBHOOK_URL: ${MERCADO_PAGO_WEBHOOK_URL}
+  MERCADO_PAGO_SANDBOX: ${MERCADO_PAGO_SANDBOX:-true}
+  APP_URL: ${APP_URL:-http://localhost}
+  TEMPORAL_ADDRESS: temporal:7233
+  TEMPORAL_NAMESPACE: default
+  TEMPORAL_TASK_QUEUE: payment-queue
+  TEMPORAL_PAYMENT_TIMEOUT_MINUTES: ${TEMPORAL_PAYMENT_TIMEOUT_MINUTES:-30}
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: '10m'
+    max-file: '5'
+
+services:
+  api:
+    image: ${IMAGE:-ghcr.io/tviniciusas/api_pagamentos_node}:${IMAGE_TAG:-latest}
+    container_name: payment-api
+    restart: unless-stopped
+    environment:
+      <<: *app-env
+    ports:
+      # Only reachable from the host itself; used by the deploy smoke test.
+      - '127.0.0.1:3000:3000'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      temporal:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    networks:
+      - payment-network
+    logging: *default-logging
+
+  # One-shot: applies pending TypeORM migrations before api/worker start.
+  migrate:
+    image: ${IMAGE:-ghcr.io/tviniciusas/api_pagamentos_node}:${IMAGE_TAG:-latest}
+    container_name: payment-migrate
+    command:
+      - node
+      - node_modules/typeorm/cli.js
+      - migration:run
+      - -d
+      - dist/infrastructure/database/data-source.js
+    environment:
+      <<: *app-env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - payment-network
+    restart: 'no'
+
+  temporal-worker:
+    image: ${IMAGE:-ghcr.io/tviniciusas/api_pagamentos_node}:${IMAGE_TAG:-latest}
+    container_name: payment-temporal-worker
+    restart: unless-stopped
+    command:
+      - node
+      - dist/infrastructure/temporal/worker.js
+    environment:
+      <<: *app-env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      temporal:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    networks:
+      - payment-network
+    logging: *default-logging
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: payment-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+      POSTGRES_DB: ${DB_NAME:-payment_db}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${DB_USERNAME:-postgres} -d ${DB_NAME:-payment_db}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - payment-network
+    logging: *default-logging
+
+  temporal:
+    image: temporalio/auto-setup:1.24.2
+    container_name: payment-temporal
+    restart: unless-stopped
+    environment:
+      DB: postgres12
+      DB_PORT: 5432
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PWD: ${DB_PASSWORD:?DB_PASSWORD is required}
+      POSTGRES_SEEDS: postgres
+      DYNAMIC_CONFIG_FILE_PATH: config/dynamicconfig/development-sql.yaml
+    volumes:
+      - ./temporal-config:/etc/temporal/config/dynamicconfig:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'temporal', 'workflow', 'list', '--namespace', 'default']
+      interval: 10s
+      timeout: 10s
+      retries: 12
+      start_period: 40s
+    networks:
+      - payment-network
+    logging: *default-logging
+
+  temporal-ui:
+    image: temporalio/ui:2.26.2
+    container_name: payment-temporal-ui
+    restart: unless-stopped
+    environment:
+      TEMPORAL_ADDRESS: temporal:7233
+      TEMPORAL_UI_PUBLIC_PATH: /temporal
+    ports:
+      - "127.0.0.1:8088:8080"
+    depends_on:
+      temporal:
+        condition: service_healthy
+    networks:
+      - payment-network
+    logging: *default-logging
+
+volumes:
+  postgres-data:
+
+networks:
+  payment-network:
+    driver: bridge

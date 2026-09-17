@@ -266,3 +266,20 @@ curl -X PUT http://localhost:3000/api/payment/{id} \
 - **Description**: Entre 3 e 255 caracteres
 - **PaymentMethod**: Deve ser `PIX` ou `CREDIT_CARD`
 - **Status**: Deve ser `PENDING`, `PAID` ou `FAIL`
+
+## CI/CD
+
+Todo push em `main` roda lint, testes e build, publica a imagem Docker no GitHub Container Registry
+e faz o deploy automático no servidor via runner self-hosted, com migrations, smoke test em
+`GET /health` e rollback automático em caso de falha.
+
+Pull requests rodam apenas a validação (`.github/workflows/ci.yml`).
+
+Guia completo de configuração do servidor e do runner: [docs/DEPLOY.md](docs/DEPLOY.md).
+
+```bash
+# Verificações locais equivalentes ao CI
+npm run lint:check
+npm run test:ci
+npm run build
+```

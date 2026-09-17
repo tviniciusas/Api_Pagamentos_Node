@@ -15,16 +15,17 @@ import {
   WorkflowResult,
 } from '../types';
 
-const { createPaymentRecord, createMercadoPagoPreference, updatePaymentStatus } =
-  proxyActivities<typeof activities>({
-    startToCloseTimeout: '30 seconds',
-    retry: {
-      maximumAttempts: 3,
-      initialInterval: '1 second',
-      maximumInterval: '30 seconds',
-      backoffCoefficient: 2,
-    },
-  });
+const { createPaymentRecord, createMercadoPagoPreference, updatePaymentStatus } = proxyActivities<
+  typeof activities
+>({
+  startToCloseTimeout: '30 seconds',
+  retry: {
+    maximumAttempts: 3,
+    initialInterval: '1 second',
+    maximumInterval: '30 seconds',
+    backoffCoefficient: 2,
+  },
+});
 
 // Signal to receive webhook notifications
 export const paymentWebhookSignal = defineSignal<[WebhookSignal]>('paymentWebhook');

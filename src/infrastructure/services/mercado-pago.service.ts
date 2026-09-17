@@ -81,23 +81,16 @@ export class MercadoPagoService implements IPaymentGateway {
         preferenceData,
       );
 
-      this.logger.log(
-        `Preferência criada com sucesso. ID: ${response.data.id}`,
-      );
+      this.logger.log(`Preferência criada com sucesso. ID: ${response.data.id}`);
 
       const isSandbox = this.configService.get<string>('MERCADO_PAGO_SANDBOX', 'true') === 'true';
 
       return {
         preferenceId: response.data.id,
-        initPoint: isSandbox
-          ? response.data.sandbox_init_point
-          : response.data.init_point,
+        initPoint: isSandbox ? response.data.sandbox_init_point : response.data.init_point,
       };
     } catch (error) {
-      this.logger.error(
-        `Erro ao criar preferência no Mercado Pago: ${error.message}`,
-        error.stack,
-      );
+      this.logger.error(`Erro ao criar preferência no Mercado Pago: ${error.message}`, error.stack);
       throw error;
     }
   }

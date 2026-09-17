@@ -60,9 +60,7 @@ describe('UpdatePaymentUseCase', () => {
 
       mockPaymentRepository.findById.mockResolvedValue(null);
 
-      await expect(useCase.execute(paymentId, dto)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(useCase.execute(paymentId, dto)).rejects.toThrow(NotFoundException);
     });
   });
 });

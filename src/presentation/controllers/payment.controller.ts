@@ -47,9 +47,7 @@ export class PaymentController {
   }
 
   @Get(':id')
-  async findById(
-    @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<PaymentResponseDto> {
+  async findById(@Param('id', ParseUUIDPipe) id: string): Promise<PaymentResponseDto> {
     return this.findPaymentByIdUseCase.execute(id);
   }
 

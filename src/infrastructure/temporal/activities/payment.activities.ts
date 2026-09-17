@@ -12,10 +12,7 @@ let dataSource: DataSource;
 let httpClient: AxiosInstance;
 let configService: ConfigService;
 
-export function initializeActivities(
-  ds: DataSource,
-  config: ConfigService,
-): void {
+export function initializeActivities(ds: DataSource, config: ConfigService): void {
   dataSource = ds;
   configService = config;
 
@@ -29,9 +26,7 @@ export function initializeActivities(
   });
 }
 
-export async function createPaymentRecord(
-  paymentData: PaymentData,
-): Promise<PaymentRecord> {
+export async function createPaymentRecord(paymentData: PaymentData): Promise<PaymentRecord> {
   logger.log(`Creating payment record for CPF: ${paymentData.cpf}`);
 
   const repository = dataSource.getRepository(PaymentOrmEntity);
@@ -94,9 +89,7 @@ export async function createMercadoPagoPreference(
 
   const preference: MercadoPagoPreference = {
     preferenceId: response.data.id,
-    initPoint: isSandbox
-      ? response.data.sandbox_init_point
-      : response.data.init_point,
+    initPoint: isSandbox ? response.data.sandbox_init_point : response.data.init_point,
   };
 
   logger.log(`Mercado Pago preference created: ${preference.preferenceId}`);
@@ -108,10 +101,7 @@ export async function createMercadoPagoPreference(
   return preference;
 }
 
-export async function updatePaymentStatus(
-  paymentId: string,
-  status: PaymentStatus,
-): Promise<void> {
+export async function updatePaymentStatus(paymentId: string, status: PaymentStatus): Promise<void> {
   logger.log(`Updating payment ${paymentId} to status: ${status}`);
 
   const repository = dataSource.getRepository(PaymentOrmEntity);
@@ -120,9 +110,7 @@ export async function updatePaymentStatus(
   logger.log(`Payment ${paymentId} updated successfully`);
 }
 
-export async function getPaymentById(
-  paymentId: string,
-): Promise<PaymentRecord | null> {
+export async function getPaymentById(paymentId: string): Promise<PaymentRecord | null> {
   const repository = dataSource.getRepository(PaymentOrmEntity);
   const entity = await repository.findOne({ where: { id: paymentId } });
 

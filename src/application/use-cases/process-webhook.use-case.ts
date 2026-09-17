@@ -4,10 +4,7 @@ import {
   IPaymentRepository,
   PAYMENT_REPOSITORY,
 } from '../../domain/repositories/payment.repository.interface';
-import {
-  TemporalClient,
-  TEMPORAL_CLIENT,
-} from '../../infrastructure/temporal/temporal.client';
+import { TemporalClient, TEMPORAL_CLIENT } from '../../infrastructure/temporal/temporal.client';
 import { paymentWebhookSignal } from '../../infrastructure/temporal/workflows/payment.workflow';
 import { MercadoPagoWebhookDto } from '../dtos';
 

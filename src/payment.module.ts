@@ -17,10 +17,7 @@ import { PaymentController } from './presentation/controllers/payment.controller
 import { WebhookController } from './presentation/controllers/webhook.controller';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([PaymentOrmEntity]),
-    TemporalModule,
-  ],
+  imports: [TypeOrmModule.forFeature([PaymentOrmEntity]), TemporalModule],
   controllers: [PaymentController, WebhookController],
   providers: [
     // Use Cases

@@ -5,14 +5,8 @@ import {
   IPaymentRepository,
   PAYMENT_REPOSITORY,
 } from '../../domain/repositories/payment.repository.interface';
-import {
-  IPaymentGateway,
-  PAYMENT_GATEWAY,
-} from '../../domain/services/payment-gateway.interface';
-import {
-  TemporalClient,
-  TEMPORAL_CLIENT,
-} from '../../infrastructure/temporal/temporal.client';
+import { IPaymentGateway, PAYMENT_GATEWAY } from '../../domain/services/payment-gateway.interface';
+import { TemporalClient, TEMPORAL_CLIENT } from '../../infrastructure/temporal/temporal.client';
 import {
   creditCardPaymentWorkflow,
   getPaymentStateQuery,

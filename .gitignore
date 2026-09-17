@@ -2,4 +2,10 @@
 /node_modules
 /dist
 /build
+/coverage
 .vscode/
+dev.md
+.env
+.env.production
+.env.local
+*.log
