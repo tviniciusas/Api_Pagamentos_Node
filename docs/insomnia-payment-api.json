@@ -20,7 +20,8 @@
       "data": {
         "base_url": "https://pagamentos.168.228.189.196.nip.io",
         "cpf": "12345678901",
-        "payment_id": ""
+        "payment_id": "",
+        "preference_id": ""
       }
     },
     {
@@ -50,7 +51,6 @@
       "name": "Default Jar",
       "cookies": []
     },
-
     {
       "_id": "fld_health",
       "_type": "request_group",
@@ -66,10 +66,14 @@
       "description": "Retorna status, uptime e a versão (tag da imagem) em produção.",
       "method": "GET",
       "url": "{{ _.base_url }}/health",
-      "headers": [{ "name": "Accept", "value": "application/json" }],
+      "headers": [
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
       "metaSortKey": 0
     },
-
     {
       "_id": "fld_payments",
       "_type": "request_group",
@@ -85,7 +89,12 @@
       "description": "Cria o registro com status PENDING. Não passa pelo Temporal nem pelo Mercado Pago.\n\nResposta 201:\n```json\n{\n  \"id\": \"c656901b-0e57-4957-8fb3-675d54d68580\",\n  \"cpf\": \"12345678901\",\n  \"description\": \"Assinatura mensal\",\n  \"amount\": 100,\n  \"paymentMethod\": \"PIX\",\n  \"status\": \"PENDING\",\n  \"createdAt\": \"2026-09-17T17:51:50.911Z\",\n  \"updatedAt\": \"2026-09-17T17:51:50.911Z\"\n}\n```",
       "method": "POST",
       "url": "{{ _.base_url }}/api/payment",
-      "headers": [{ "name": "Content-Type", "value": "application/json" }],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
       "body": {
         "mimeType": "application/json",
         "text": "{\n  \"cpf\": \"{{ _.cpf }}\",\n  \"description\": \"Assinatura mensal\",\n  \"amount\": 100.00,\n  \"paymentMethod\": \"PIX\"\n}"
@@ -100,7 +109,12 @@
       "description": "Inicia um workflow no Temporal, cria a preferência no Mercado Pago e retorna o `initPoint` (link de checkout). O workflow fica aguardando o webhook por até 30 minutos.\n\nAcompanhe em {{ _.base_url }}/temporal/\n\nResposta 201:\n```json\n{\n  \"id\": \"ca6e24f8-01d3-4368-9dbf-890357ef500b\",\n  \"cpf\": \"12345678901\",\n  \"description\": \"Teste cartao\",\n  \"amount\": 50,\n  \"paymentMethod\": \"CREDIT_CARD\",\n  \"status\": \"PENDING\",\n  \"initPoint\": \"https://sandbox.mercadopago.com.br/checkout/v1/redirect?pref_id=...\",\n  \"createdAt\": \"2026-09-17T19:13:44.007Z\",\n  \"updatedAt\": \"2026-09-17T19:13:44.007Z\"\n}\n```",
       "method": "POST",
       "url": "{{ _.base_url }}/api/payment",
-      "headers": [{ "name": "Content-Type", "value": "application/json" }],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
       "body": {
         "mimeType": "application/json",
         "text": "{\n  \"cpf\": \"{{ _.cpf }}\",\n  \"description\": \"Teste cartao\",\n  \"amount\": 50.00,\n  \"paymentMethod\": \"CREDIT_CARD\"\n}"
@@ -116,10 +130,23 @@
       "method": "GET",
       "url": "{{ _.base_url }}/api/payment",
       "parameters": [
-        { "name": "cpf", "value": "{{ _.cpf }}", "disabled": false },
-        { "name": "paymentMethod", "value": "PIX", "disabled": true }
+        {
+          "name": "cpf",
+          "value": "{{ _.cpf }}",
+          "disabled": false
+        },
+        {
+          "name": "paymentMethod",
+          "value": "PIX",
+          "disabled": true
+        }
       ],
-      "headers": [{ "name": "Accept", "value": "application/json" }],
+      "headers": [
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
       "metaSortKey": 2
     },
     {
@@ -130,7 +157,12 @@
       "description": "Retorna 404 se o UUID não existir e 400 se não for um UUID válido. Preencha `payment_id` no ambiente ou substitua na URL.",
       "method": "GET",
       "url": "{{ _.base_url }}/api/payment/{{ _.payment_id }}",
-      "headers": [{ "name": "Accept", "value": "application/json" }],
+      "headers": [
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
       "metaSortKey": 3
     },
     {
@@ -141,7 +173,12 @@
       "description": "Status aceitos: PENDING, PAID, FAIL.",
       "method": "PUT",
       "url": "{{ _.base_url }}/api/payment/{{ _.payment_id }}",
-      "headers": [{ "name": "Content-Type", "value": "application/json" }],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
       "body": {
         "mimeType": "application/json",
         "text": "{\n  \"status\": \"PAID\"\n}"
@@ -156,14 +193,18 @@
       "description": "CPF com 10 dígitos, valor negativo e método inválido. Mostra as mensagens de validação em português.",
       "method": "POST",
       "url": "{{ _.base_url }}/api/payment",
-      "headers": [{ "name": "Content-Type", "value": "application/json" }],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
       "body": {
         "mimeType": "application/json",
         "text": "{\n  \"cpf\": \"1234567890\",\n  \"description\": \"ab\",\n  \"amount\": -5,\n  \"paymentMethod\": \"BOLETO\"\n}"
       },
       "metaSortKey": 5
     },
-
     {
       "_id": "fld_webhook",
       "_type": "request_group",
@@ -176,17 +217,21 @@
       "_type": "request",
       "parentId": "fld_webhook",
       "name": "Webhook Mercado Pago (simulação)",
-      "description": "Formato que o Mercado Pago envia. `data.id` é o ID do pagamento no Mercado Pago; a API consulta esse ID, encontra o pagamento pelo `external_reference` e sinaliza o workflow. Sempre responde 200 `{ \"received\": true }`.",
+      "description": "Simula a notificação do Mercado Pago para completar o workflow.\n\nComo usar:\n1. Crie um pagamento CREDIT_CARD e copie o `pref_id` da URL do `initPoint` (ex.: 62917950-cfecc2d0-1062-4144-b7d5-0cdfa397f137).\n2. Cole em `preference_id` no ambiente (ou direto em `data.id`).\n3. Envie com `action` = `payment.approved` (vira PAID) ou `payment.rejected` (vira FAIL).\n\nA API localiza o pagamento pelo `externalId` (= id da preferência), sinaliza o workflow no Temporal e ele termina como Completed. Sempre responde 200 `{ \"received\": true }`.",
       "method": "POST",
       "url": "{{ _.base_url }}/api/webhook/mercado-pago",
-      "headers": [{ "name": "Content-Type", "value": "application/json" }],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"id\": \"12345\",\n  \"live_mode\": false,\n  \"type\": \"payment\",\n  \"date_created\": \"2026-09-17T19:13:44.007Z\",\n  \"user_id\": \"44444\",\n  \"api_version\": \"v1\",\n  \"action\": \"payment.updated\",\n  \"data\": {\n    \"id\": \"123456789\"\n  }\n}"
+        "text": "{\n  \"id\": 12345,\n  \"live_mode\": false,\n  \"type\": \"payment\",\n  \"date_created\": \"2026-09-17T19:13:44.007Z\",\n  \"user_id\": 44444,\n  \"api_version\": \"v1\",\n  \"action\": \"payment.approved\",\n  \"data\": {\n    \"id\": \"{{ _.preference_id }}\"\n  }\n}"
       },
       "metaSortKey": 0
     },
-
     {
       "_id": "fld_docs",
       "_type": "request_group",
@@ -202,7 +247,12 @@
       "description": "Especificação gerada pelo Swagger. Interface em {{ _.base_url }}/docs",
       "method": "GET",
       "url": "{{ _.base_url }}/docs/json",
-      "headers": [{ "name": "Accept", "value": "application/json" }],
+      "headers": [
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
       "metaSortKey": 0
     }
   ]
