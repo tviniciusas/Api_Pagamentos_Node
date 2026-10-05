@@ -91,6 +91,7 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PWD=postgres
       - POSTGRES_SEEDS=postgres
+      - DEFAULT_NAMESPACE_RETENTION=30
       - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development-sql.yaml
     volumes:
       - ./temporal-config:/etc/temporal/config/dynamicconfig

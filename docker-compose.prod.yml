@@ -116,6 +116,8 @@ services:
       POSTGRES_USER: ${DB_USERNAME:-postgres}
       POSTGRES_PWD: ${DB_PASSWORD:?DB_PASSWORD is required}
       POSTGRES_SEEDS: postgres
+      # Days to keep closed workflow histories visible in the UI (auto-setup default is 1).
+      DEFAULT_NAMESPACE_RETENTION: 30
       DYNAMIC_CONFIG_FILE_PATH: config/dynamicconfig/development-sql.yaml
     volumes:
       - ./temporal-config:/etc/temporal/config/dynamicconfig:ro
